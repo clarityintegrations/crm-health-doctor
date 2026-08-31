@@ -1,0 +1,19 @@
+{
+  "contacts": [
+    {"alias":"C-001","firstname":"Maya","lastname":"Chen","hubspot_owner_id":"owner-a","createdate":"2026-01-10T12:00:00Z","notes_last_updated":"2026-08-15T12:00:00Z"},
+    {"alias":"C-002","firstname":"Jonas","lastname":"Rivera","hubspot_owner_id":"  ","createdate":"2026-02-10T12:00:00Z","notes_last_contacted":"2026-08-14T12:00:00Z"},
+    {"alias":"C-003","firstname":"MARIA","lastname":"LOPEZ","hubspot_owner_id":"owner-a","createdate":"2026-03-10T12:00:00Z","hs_last_sales_activity_timestamp":"2026-08-13T12:00:00Z"},
+    {"alias":"C-004","firstname":"Élodie","lastname":"O'Connor-Sánchez","hubspot_owner_id":"owner-a","createdate":"2026-04-10T12:00:00Z","notes_last_updated":"2026-08-12T12:00:00Z"},
+    {"alias":"C-005","firstname":"Agent7","lastname":"Smith","hubspot_owner_id":"owner-a","createdate":"2026-05-10T12:00:00Z","notes_last_updated":"2026-08-11T12:00:00Z"},
+    {"alias":"C-006","firstname":"Noah","lastname":"Williams","hubspot_owner_id":"owner-a","createdate":"2026-06-10T12:00:00Z"},
+    {"alias":"C-007","firstname":"Amina","lastname":"Diallo","hubspot_owner_id":"owner-a","createdate":"2025-01-10T12:00:00Z","notes_last_updated":"2026-05-01T12:00:00Z"},
+    {"alias":"C-008","firstname":"  TEST  USER  ","lastname":"99","hubspot_owner_id":null,"createdate":"2025-01-10T12:00:00Z"}
+  ],
+  "deals": [
+    {"alias":"D-001","dealname":"Healthy Expansion","hubspot_owner_id":"owner-a","createdate":"2026-07-01T12:00:00Z","notes_last_updated":"2026-08-15T12:00:00Z","hs_is_closed_won":false,"hs_is_closed_lost":false},
+    {"alias":"D-002","dealname":"Stale Renewal","hubspot_owner_id":"owner-a","createdate":"2026-01-01T12:00:00Z","notes_last_contacted":"2026-06-01T12:00:00Z","hs_is_closed_won":false,"hs_is_closed_lost":false},
+    {"alias":"D-003","dealname":"No Logged Activity","hubspot_owner_id":"owner-a","createdate":"2026-06-15T12:00:00Z","hs_is_closed_won":false,"hs_is_closed_lost":false},
+    {"alias":"D-004","dealname":"Won Legacy Deal","hubspot_owner_id":"owner-a","createdate":"2025-01-01T12:00:00Z","notes_last_updated":"2025-02-01T12:00:00Z","hs_is_closed_won":true,"hs_is_closed_lost":false},
+    {"alias":"D-005","dealname":"Lost Legacy Deal","hubspot_owner_id":"owner-a","createdate":"2025-01-01T12:00:00Z","notes_last_updated":"2025-02-01T12:00:00Z","hs_is_closed_won":false,"hs_is_closed_lost":true}
+  ]
+}

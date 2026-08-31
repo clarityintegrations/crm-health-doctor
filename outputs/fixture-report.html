@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRM Health Doctor</title>
+<style>
+:root{--ink:#17213a;--muted:#64748b;--line:#dbe4ef;--surface:#fff;--bg:#f3f7fb;--blue:#2563eb;--teal:#0f766e}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,sans-serif}
+main{max-width:1120px;margin:auto;padding:42px 24px 64px} header{display:flex;justify-content:space-between;gap:30px;align-items:end;margin-bottom:28px}
+h1{font-size:34px;letter-spacing:-.04em;margin:0} h2{font-size:20px;margin:34px 0 14px} p{color:var(--muted)}
+.badge{background:#dbeafe;color:#1d4ed8;border-radius:999px;padding:7px 12px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em}
+.hero{display:grid;grid-template-columns:220px 1fr;gap:20px} .score{background:linear-gradient(145deg,#172554,#2563eb);color:#fff;border-radius:18px;padding:28px}
+.score strong{display:block;font-size:64px;line-height:1} .score span{opacity:.8}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px} .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:17px}
+.card span{display:block;color:var(--muted);font-size:12px} .card strong{font-size:28px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden} table{border-collapse:collapse;width:100%} th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top} th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);background:#f8fafc} tr:last-child td{border-bottom:0}
+.priority{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:10px;background:#fee2e2;color:#991b1b;font-weight:800} .issue+ .issue{margin-top:7px}
+.method{display:grid;grid-template-columns:repeat(2,1fr);gap:16px} .method article{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px} .method h3{margin:0 0 6px;font-size:15px}
+footer{margin-top:30px;color:var(--muted);font-size:12px} @media(max-width:760px){.hero,.method{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}header{display:block}.panel{overflow:auto}}
+</style>
+</head>
+<body><main>
+<header><div><h1>CRM Health Doctor</h1><p>Deterministic CRM quality assessment with a governed read-only data boundary.</p></div><span class="badge">Source: fixture</span></header>
+<section class="hero"><div class="score"><span>Overall health</span><strong>60.4</strong><span>out of 100</span></div><div class="cards"><div class="card"><span>Malformed name</span><strong>3</strong></div><div class="card"><span>Missing owner</span><strong>2</strong></div><div class="card"><span>Stale activity</span><strong>1</strong></div><div class="card"><span>Stale open deal</span><strong>2</strong></div><div class="card"><span>Weak activity</span><strong>2</strong></div></div></section>
+<h2>Category score audit</h2><div class="panel"><table><thead><tr><th>Category</th><th>Flagged</th><th>Applicable</th><th>Score</th><th>Normalized weight</th></tr></thead><tbody><tr><td>Missing owner</td><td>2</td><td>13</td><td>84.6</td><td>30.0%</td></tr><tr><td>Stale open deals</td><td>2</td><td>3</td><td>33.3</td><td>30.0%</td></tr><tr><td>Name quality</td><td>3</td><td>8</td><td>62.5</td><td>15.0%</td></tr><tr><td>Contact activity</td><td>3</td><td>8</td><td>62.5</td><td>25.0%</td></tr></tbody></table></div>
+<h2>Top-20 review queue</h2><div class="panel"><table><thead><tr><th>Priority</th><th>Alias</th><th>Type</th><th>Record</th><th>Why it was flagged</th></tr></thead><tbody><tr><td><span class="priority">95</span></td><td>C-008</td><td>Contact</td><td>  TEST  USER   99</td><td><div class="issue"><b>Malformed name:</b> first name has leading or trailing whitespace; first name has repeated internal whitespace; first name is ALL CAPS; last name contains digits.</div><div class="issue"><b>Missing owner:</b> Owner is absent or blank.</div><div class="issue"><b>Weak activity:</b> No approved contact activity signal exists; creation time is not treated as engagement.</div></td></tr><tr><td><span class="priority">75</span></td><td>D-002</td><td>Deal</td><td>Stale Renewal</td><td><div class="issue"><b>Stale open deal:</b> Open deal&#x27;s latest activity is 80 days old, exceeding the 30-day threshold by 50 days.</div></td></tr><tr><td><span class="priority">75</span></td><td>D-003</td><td>Deal</td><td>No Logged Activity</td><td><div class="issue"><b>Stale open deal:</b> Open deal&#x27;s creation-time fallback is 66 days old, exceeding the 30-day threshold by 36 days.</div></td></tr><tr><td><span class="priority">50</span></td><td>C-007</td><td>Contact</td><td>Amina Diallo</td><td><div class="issue"><b>Stale activity:</b> Latest approved activity is 111 days old, exceeding the 90-day threshold by 21 days.</div></td></tr><tr><td><span class="priority">40</span></td><td>C-002</td><td>Contact</td><td>Jonas Rivera</td><td><div class="issue"><b>Missing owner:</b> Owner is absent or blank.</div></td></tr><tr><td><span class="priority">35</span></td><td>C-006</td><td>Contact</td><td>Noah Williams</td><td><div class="issue"><b>Weak activity:</b> No approved contact activity signal exists; creation time is not treated as engagement.</div></td></tr><tr><td><span class="priority">20</span></td><td>C-003</td><td>Contact</td><td>MARIA LOPEZ</td><td><div class="issue"><b>Malformed name:</b> first name is ALL CAPS; last name is ALL CAPS.</div></td></tr><tr><td><span class="priority">20</span></td><td>C-005</td><td>Contact</td><td>Agent7 Smith</td><td><div class="issue"><b>Malformed name:</b> first name contains digits.</div></td></tr></tbody></table></div>
+<h2>Methodology</h2><section class="method">
+<article><h3>Thresholds</h3><p>Open deals are stale after 30 days. Contact activity is stale after 90 days. Evaluation time: 2026-08-20T12:00:00+00:00.</p></article>
+<article><h3>Deal timestamp precedence</h3><p>Use the latest of Last Activity Date and Last Contacted. If neither exists, use creation time as an explicitly labeled fallback. If all are absent, return an unknown-activity diagnostic.</p></article>
+<article><h3>Scoring</h3><p>Category score = 100 × (1 − flagged ÷ applicable). Empty categories are excluded and remaining weights are renormalized.</p></article>
+<article><h3>Prioritization</h3><p>Priority is the sum of explicit issue severity and bounded age bonuses, capped at 100. Ties sort by object type and alias.</p></article>
+</section>
+<footer>Generated locally. No telemetry, external scripts, CDN assets, or raw HubSpot record IDs.</footer>
+</main></body></html>

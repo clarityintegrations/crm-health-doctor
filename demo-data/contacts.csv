@@ -1,0 +1,6 @@
+Email,First Name,Last Name,Contact owner,Demo Scenario
+healthy.contact@example.com,Maya,Chen,ASSIGN_TEST_PORTAL_OWNER,Healthy Contact
+unowned.contact@example.com,Jonas,Rivera,,Unowned Contact
+malformed.contact@example.com,MARIA7,LOPEZ,ASSIGN_TEST_PORTAL_OWNER,Malformed Contact
+no.activity.contact@example.com,Noah,Williams,ASSIGN_TEST_PORTAL_OWNER,No Activity Contact
+stale.contact@example.com,Amina,Diallo,ASSIGN_TEST_PORTAL_OWNER,Stale Contact
