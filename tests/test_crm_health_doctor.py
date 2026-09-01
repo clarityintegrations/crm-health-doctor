@@ -1,6 +1,7 @@
 import json
 from dataclasses import replace
 from pathlib import Path
+import re
 import tempfile
 import unittest
 
@@ -198,6 +199,71 @@ class AdapterAndReportTests(unittest.TestCase):
         )
         queue = build_queue(evaluate(dataset, CONFIG), CONFIG)
         self.assertEqual([row.alias for row in queue], ["C-001", "C-002"])
+
+    def test_fixture_report_embeds_safe_bounded_webmcp_state(self):
+        malicious = contact(
+            alias="C-SAFE",
+            firstname="</script><script>alert(1)</script>",
+            owner=None,
+        )
+        dataset = Dataset("fixture", (malicious,), ())
+        evaluation = evaluate(dataset, CONFIG)
+        html = render_html(
+            dataset,
+            CONFIG,
+            evaluation,
+            calculate_score(evaluation),
+            build_queue(evaluation, CONFIG),
+        )
+        match = re.search(
+            r'<script type="application/json" id="crm-health-snapshot">(.*?)</script>',
+            html,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        serialized = match.group(1)
+        self.assertNotIn("<", serialized)
+        self.assertIn(r"\u003c/script\u003e", serialized)
+        snapshot = json.loads(serialized)
+        self.assertEqual(snapshot["version"], 1)
+        self.assertLessEqual(len(snapshot["issues"]), 20)
+        self.assertNotIn("owner-a", serialized)
+        self.assertNotIn("hubspot_owner_id", serialized)
+
+    def test_snapshot_aliases_match_rendered_rows_and_queue_order(self):
+        dataset = load_fixture()
+        evaluation = evaluate(dataset, CONFIG)
+        queue = build_queue(evaluation, CONFIG)
+        html = render_html(
+            dataset,
+            CONFIG,
+            evaluation,
+            calculate_score(evaluation),
+            queue,
+        )
+        serialized = re.search(
+            r'<script type="application/json" id="crm-health-snapshot">(.*?)</script>',
+            html,
+            re.DOTALL,
+        ).group(1)
+        snapshot_aliases = [item["alias"] for item in json.loads(serialized)["issues"]]
+        rendered_aliases = re.findall(r'<tr data-alias="([^"]+)">', html)
+        self.assertEqual(snapshot_aliases, [row.alias for row in queue])
+        self.assertEqual(rendered_aliases, snapshot_aliases)
+
+    def test_only_fixture_reports_register_webmcp(self):
+        dataset = Dataset("hubspot", (contact(owner=None),), ())
+        evaluation = evaluate(dataset, CONFIG)
+        html = render_html(
+            dataset,
+            CONFIG,
+            evaluation,
+            calculate_score(evaluation),
+            build_queue(evaluation, CONFIG),
+        )
+        self.assertNotIn("crm-health-snapshot", html)
+        self.assertNotIn("list_priority_issues", html)
+        self.assertNotIn("Synthetic WebMCP Challenge Demo", html)
 
 
 if __name__ == "__main__":
