@@ -8,7 +8,8 @@ from typing import Union
 
 from .adapter import Dataset
 from .config import Config
-from .rules import Evaluation
+from .recommendations import guidance_for
+from .rules import Evaluation, Issue
 from .scoring import QueueRow, Scorecard
 
 
@@ -32,27 +33,70 @@ def _label(value: str) -> str:
     return LABELS.get(value, value.replace("_", " ").title())
 
 
-def _webmcp_snapshot(queue: tuple[QueueRow, ...]) -> dict[str, object]:
+def _finding_snapshot(issue: Issue) -> dict[str, object]:
+    guidance = guidance_for(issue.issue_type)
+    return {
+        "issueType": issue.issue_type,
+        "category": issue.category,
+        "evidence": issue.explanation,
+        "impact": guidance.impact,
+        "recommendedSteps": list(guidance.recommended_steps),
+        "requiresHumanReview": guidance.requires_human_review,
+    }
+
+
+def _webmcp_snapshot(
+    dataset: Dataset,
+    config: Config,
+    evaluation: Evaluation,
+    scorecard: Scorecard,
+    queue: tuple[QueueRow, ...],
+) -> dict[str, object]:
     """Return only the bounded, alias-safe fields exposed to WebMCP."""
+    counts = Counter(issue.issue_type for issue in evaluation.issues)
     return {
         "version": 1,
+        "summary": {
+            "source": "fixture",
+            "demoMode": True,
+            "evaluationDate": config.evaluation_date.isoformat(),
+            "overallScore": scorecard.overall_score,
+            "scope": {
+                "contacts": len(dataset.contacts),
+                "deals": len(dataset.deals),
+            },
+            "categories": [
+                {
+                    "category": item.category,
+                    "flagged": item.flagged,
+                    "applicable": item.applicable,
+                    "score": None if item.score is None else round(item.score, 1),
+                    "normalizedWeight": item.normalized_weight,
+                }
+                for item in scorecard.categories
+            ],
+            "issueCounts": {
+                "malformedName": counts["malformed_name"],
+                "missingOwner": counts["missing_owner"],
+                "staleActivity": counts["stale_activity"],
+                "staleOpenDeal": counts["stale_open_deal"],
+                "weakActivity": counts["weak_activity"],
+            },
+        },
         "issues": [
             {
                 "alias": row.alias,
                 "displayName": row.display_name,
                 "objectType": row.object_type,
                 "priority": row.priority,
-                "findings": [
-                    {
-                        "issueType": issue.issue_type,
-                        "category": issue.category,
-                        "evidence": issue.explanation,
-                    }
-                    for issue in row.issues
-                ],
+                "findings": [_finding_snapshot(issue) for issue in row.issues],
             }
             for row in queue[:20]
         ],
+        "explanationDisclaimer": (
+            "Deterministic prototype guidance for synthetic data. Verify source records, "
+            "ownership, business context, and intended changes before remediation."
+        ),
     }
 
 
@@ -112,7 +156,9 @@ def render_html(
     )
     webmcp_markup = ""
     if is_synthetic_demo:
-        snapshot = _inert_json(_webmcp_snapshot(queue))
+        snapshot = _inert_json(
+            _webmcp_snapshot(dataset, config, evaluation, scorecard, queue)
+        )
         webmcp_markup = (
             f'<script type="application/json" id="{WEBMCP_SNAPSHOT_ID}">{snapshot}</script>'
             f"<script>{WEBMCP_SOURCE}</script>"

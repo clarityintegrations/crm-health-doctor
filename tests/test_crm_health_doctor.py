@@ -7,6 +7,7 @@ import unittest
 
 from src.adapter import Contact, Dataset, Deal, normalize_hubspot, normalize_fixture
 from src.config import Config, HUBSPOT_READ_TOOL_ALLOWLIST, parse_datetime
+from src.recommendations import GUIDANCE_BY_ISSUE_TYPE, guidance_for
 from src.report import render_html
 from src.rules import evaluate, name_quality_reasons
 from src.scoring import build_queue, calculate_score
@@ -226,9 +227,84 @@ class AdapterAndReportTests(unittest.TestCase):
         self.assertIn(r"\u003c/script\u003e", serialized)
         snapshot = json.loads(serialized)
         self.assertEqual(snapshot["version"], 1)
+        self.assertEqual(
+            set(snapshot),
+            {"version", "summary", "issues", "explanationDisclaimer"},
+        )
         self.assertLessEqual(len(snapshot["issues"]), 20)
         self.assertNotIn("owner-a", serialized)
         self.assertNotIn("hubspot_owner_id", serialized)
+
+    def test_fixture_summary_is_exact_and_deterministic(self):
+        dataset = load_fixture()
+        evaluation = evaluate(dataset, CONFIG)
+        html = render_html(
+            dataset,
+            CONFIG,
+            evaluation,
+            calculate_score(evaluation),
+            build_queue(evaluation, CONFIG),
+        )
+        serialized = re.search(
+            r'<script type="application/json" id="crm-health-snapshot">(.*?)</script>',
+            html,
+            re.DOTALL,
+        ).group(1)
+        summary = json.loads(serialized)["summary"]
+        self.assertEqual(
+            set(summary),
+            {
+                "source",
+                "demoMode",
+                "evaluationDate",
+                "overallScore",
+                "scope",
+                "categories",
+                "issueCounts",
+            },
+        )
+        self.assertEqual(summary["source"], "fixture")
+        self.assertIs(summary["demoMode"], True)
+        self.assertEqual(summary["evaluationDate"], "2026-08-20T12:00:00+00:00")
+        self.assertEqual(summary["overallScore"], 60.4)
+        self.assertEqual(summary["scope"], {"contacts": 8, "deals": 5})
+        self.assertEqual(
+            summary["issueCounts"],
+            {
+                "malformedName": 3,
+                "missingOwner": 2,
+                "staleActivity": 1,
+                "staleOpenDeal": 2,
+                "weakActivity": 2,
+            },
+        )
+        self.assertEqual(
+            [
+                (category["category"], category["score"])
+                for category in summary["categories"]
+            ],
+            [
+                ("missing_owner", 84.6),
+                ("stale_open_deals", 33.3),
+                ("name_quality", 62.5),
+                ("contact_activity", 62.5),
+            ],
+        )
+
+    def test_every_fixture_finding_has_deterministic_guidance(self):
+        evaluation = evaluate(load_fixture(), CONFIG)
+        fixture_issue_types = {issue.issue_type for issue in evaluation.issues}
+        self.assertTrue(fixture_issue_types.issubset(GUIDANCE_BY_ISSUE_TYPE))
+        for issue_type in fixture_issue_types:
+            guidance = guidance_for(issue_type)
+            self.assertTrue(guidance.impact)
+            self.assertGreaterEqual(len(guidance.recommended_steps), 1)
+            self.assertLessEqual(len(guidance.recommended_steps), 5)
+            self.assertIs(guidance.requires_human_review, True)
+
+    def test_unknown_issue_type_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "No deterministic guidance"):
+            guidance_for("unmapped_issue")
 
     def test_snapshot_aliases_match_rendered_rows_and_queue_order(self):
         dataset = load_fixture()
@@ -263,6 +339,8 @@ class AdapterAndReportTests(unittest.TestCase):
         )
         self.assertNotIn("crm-health-snapshot", html)
         self.assertNotIn("list_priority_issues", html)
+        self.assertNotIn("get_crm_health_summary", html)
+        self.assertNotIn("explain_priority_issue", html)
         self.assertNotIn("Synthetic WebMCP Challenge Demo", html)
 
 
