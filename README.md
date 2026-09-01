@@ -1,102 +1,175 @@
 # CRM Health Doctor
 
-CRM Health Doctor is a completed hackathon MVP and an exploration platform for a possible Clarity Integrations CRM reliability offering.
+A deterministic CRM reliability assessment with a governed, read-only WebMCP human-agent co-review layer.
 
-The project is now in **portfolio and product evolution mode**. The original implementation, synthetic fixtures, tests, and generated reports remain preserved as evidence of what was built. Future-looking documents are explicitly separated from hackathon facts.
+## Problem
 
-## Evidence status
+Automation, reporting, routing, and AI agents all depend on sufficiently reliable CRM records. Missing ownership, stale activity, weak engagement signals, and malformed fields can make those systems operate on incomplete or misleading context. CRM Health Doctor demonstrates a narrow, auditable way to identify selected failures before expanding automation or deploying AI. It does not claim measured customer outcomes or production readiness.
 
-### Confirmed facts
+## What It Does
 
-- The MVP was demonstrated live during the HubSpot Building with AI Hackathon.
-- It generated a CRM health score, issue categories, a prioritized review queue, record-level explanations, and a self-contained HTML report.
-- It used synthetic/test data, deterministic scoring rules, read-only-first design, and governed HubSpot MCP access.
-- The application has no HubSpot write path. Its orchestration allowlist contains only `get_user_details` and `search_crm_objects`.
-- The local fixture run is reproducible: 8 contacts, 5 deals, 10 issues, 8 queue rows, and an overall score of 60.4 for the fixed evaluation date.
-- The sanitized test-portal snapshot demonstrates the HubSpot data boundary, not representative CRM performance or broad rule coverage.
+The challenge demo follows one deterministic evidence chain:
 
-### Observations
+1. Evaluate a synthetic contact-and-deal fixture with explicit Python rules.
+2. Calculate category scores and an overall CRM health score.
+3. Consolidate findings into a deterministic priority review queue.
+4. Embed a bounded, safely escaped report snapshot in static HTML.
+5. Expose three read-only WebMCP tools for structured agent access.
+6. Keep the human on the same report page and visibly focus the record under review.
 
-- HubSpot emphasized developer workflows using tools such as Claude Code and Cursor.
-- Stronger commercial storytelling appeared to create more audience impact than technical depth alone.
-- CRM reliability before AI deployment appeared to be a stronger positioning angle than a standalone data-quality score.
+The diagnostic engine and remediation mappings do not call an LLM. The agent receives precomputed evidence and deterministic guidance; any remediation remains a human decision.
 
-These are post-event interpretations, not measured market results.
+## WebMCP Challenge Extension
 
-### Hypotheses
+CRM Health Doctor existed before the WebMCP Challenge. The application, diagnostic engine, scoring logic, synthetic fixtures, report UI, and existing HubSpot/MCP adapter capabilities are pre-existing work.
 
-- Clarity Integrations may be able to package the MVP as a scoped CRM reliability assessment.
-- A recurring CRM Reliability Agent may be valuable after the assessment workflow is validated.
-- An AI Readiness Assessment may provide a commercially clearer umbrella by connecting CRM reliability to the safe deployment of AI workflows.
+During the challenge period, WebMCP added a browser-native, agent-facing layer over the synthetic report. This extension introduced structured report state, three read-only tools, strict tool inputs, bounded outputs, deterministic remediation guidance, and same-page visual synchronization. It did not add live HubSpot access, CRM writes, authentication, persistence, or backend services.
 
-These are opportunities to test. The project does not claim customers, adoption, revenue, production readiness, or validated demand.
+## Human + Agent Workflow
 
-## Portfolio documents
+1. `get_crm_health_summary` gives the agent the precomputed overall score, evaluated scope, category state, and issue counts.
+2. `list_priority_issues` applies structured filters to the deterministic review queue and focuses the highest returned row in the report.
+3. `explain_priority_issue` returns the selected record's evidence, operational impact, recommended review steps, and human-review requirement while focusing the same row.
 
-- [Lessons learned](docs/LESSONS_LEARNED.md)
-- [Technical case study](docs/TECHNICAL_CASE_STUDY.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Product positioning draft](docs/PRODUCT_POSITIONING.md)
-- [Improvement roadmap](docs/ROADMAP.md)
+The visible synchronization connects the agent's structured selection to the evidence the human sees: when the agent selects or explains alias `C-008`, the page scrolls to and highlights the `C-008` queue row and updates an accessible status message.
 
-## Preserved hackathon artifact
+## WebMCP Tools
 
-| Evidence | Location | What it supports |
-|---|---|---|
-| Deterministic implementation | `src/` | Normalization, rules, scoring, prioritization, and report generation |
-| Automated verification | `tests/` | Boundary behavior, scoring, read-only allowlist, ID removal, and HTML escaping |
-| Synthetic rule matrix | `fixtures/health_matrix.json` | Reproducible coverage of healthy and flagged scenarios |
-| Sanitized integration snapshot | `fixtures/hubspot-integration-sanitized.json` | Test-portal input shape with raw record IDs removed |
-| Generated fixture report | `outputs/fixture-report.html` | Auditable scorecard and review queue |
-| Generated integration report | `outputs/hubspot-report.html` | Read-only test-portal workflow evidence |
-| Demo import guidance | `demo-data/DEMO_DATASET.md` | Synthetic data preparation and manual seeding controls |
+| Tool | Purpose | Write capability |
+| --- | --- | --- |
+| `get_crm_health_summary` | Read overall health, scope, category scores, and bounded issue counts | None — read-only |
+| `list_priority_issues` | Filter and rank queue findings, then focus the first matching row | None — read-only |
+| `explain_priority_issue` | Explain one queue alias with deterministic impact and review steps | None — read-only |
 
-Generated output is evidence of a controlled demonstration. It is not a benchmark, customer result, or production assessment.
+## Architecture
 
-## Run the preserved MVP
+```text
+Synthetic CRM fixture
+        ↓
+Python deterministic diagnostic engine
+        ↓
+Precomputed safe report state
+        ↓
+Static HTML
+        ↓
+WebMCP tools
+        ↓
+Agent + human co-review
+```
 
-Requirements: Python 3.9 or later; no third-party packages. Run these commands from this directory.
+The Python layer owns normalization, rules, scoring, prioritization, and guidance selection. The browser layer reads precomputed state; it does not reimplement the diagnostic engine.
+
+## Security & Privacy
+
+- The public challenge demo uses synthetic data only.
+- The page has no live CRM connection.
+- Raw HubSpot record IDs are not exposed.
+- The page makes no network calls.
+- The application has no CRM write path.
+- Tool inputs are strictly validated and outputs are bounded.
+- CRM-derived strings are treated as untrusted evidence, not instructions.
+- Remediation guidance is deterministic rather than LLM-generated.
+- Every recommended remediation requires human review.
+
+The repository also preserves a sanitized test-portal artifact as historical evidence. It is not used by the public challenge page and does not establish compatibility with arbitrary customer portals.
+
+## Run Locally
+
+Requirements: Python 3.9 or later. No third-party package installation is required.
+
+Regenerate the synthetic challenge page from the repository root:
 
 ```bash
 python3 -m src.main \
   --source fixture \
   --input fixtures/health_matrix.json \
-  --output outputs/fixture-report.html \
+  --output outputs/index.html \
   --evaluation-date 2026-08-20T12:00:00Z
 ```
 
-Run the verification suite:
+Serve it with Python's standard-library HTTP server:
+
+```bash
+python3 -m http.server 8765
+```
+
+Then open `http://127.0.0.1:8765/outputs/index.html` in a WebMCP-capable browser. The normal report remains usable when WebMCP is unavailable.
+
+## Test with ChatGPT
+
+Open the locally served report in ChatGPT's in-app browser, then use this validated sequence:
+
+1. **Summary:** “Using the open CRM Health Doctor page's `get_crm_health_summary` site tool, summarize the synthetic CRM's overall health, evaluated scope, and weakest category. Do not infer from the visible HTML.”
+2. **Prioritization:** “Using the open page's `list_priority_issues` site tool, return one contact issue in the `missing_owner` category with minimum priority 40 and limit 1. Tell me which alias the page highlighted.”
+3. **Explanation:** “Using the open page's `explain_priority_issue` site tool, explain alias `C-008`. Give the deterministic impact, recommended steps, and human-review requirement, and confirm which row the page is reviewing.”
+
+The validated synthetic result selects `C-008` at priority 95 and visibly focuses that row.
+
+## Test with Chrome
+
+The Chrome gate was validated with WebMCP testing enabled:
+
+1. Open `chrome://flags/#enable-webmcp-testing`, enable WebMCP testing, and relaunch Chrome.
+2. Serve and open the local report URL shown above.
+3. In DevTools, discover the registered tools:
+
+```js
+const tools = await document.modelContext.getTools();
+tools.map(({ name }) => name);
+```
+
+The validated result contained exactly `explain_priority_issue`, `get_crm_health_summary`, and `list_priority_issues`.
+
+To reproduce the tested priority execution:
+
+```js
+const priorityTool = tools.find(({ name }) => name === "list_priority_issues");
+await document.modelContext.executeTool(priorityTool, {
+  category: "missing_owner",
+  objectType: "contact",
+  minPriority: 40,
+  limit: 1,
+});
+```
+
+The tested result returned two total matches, one bounded result, alias `C-008`, and priority 95; the report focused `C-008`. These instructions document that tested Chrome flow only and do not claim broader browser compatibility.
+
+## Tests
+
+Run the complete existing suites:
 
 ```bash
 python3 -m unittest discover -s tests -v
+node tests/test_webmcp_contract.mjs
 ```
 
-Reproduce the sanitized test-portal report:
+At the feature freeze, all 26 Python tests and the dependency-free JavaScript WebMCP contract suite pass. Coverage includes deterministic scoring, threshold boundaries, stable queue ordering, safe embedded state, strict tool inputs, bounded outputs, privacy exclusions, graceful degradation, and row-focus synchronization.
 
-```bash
-python3 -m src.main \
-  --source hubspot \
-  --input fixtures/hubspot-integration-sanitized.json \
-  --output outputs/hubspot-report.html \
-  --evaluation-date 2026-08-20T12:00:00Z
-```
+## Repository Structure
 
-## Current scoring contract
+| Path | Purpose |
+| --- | --- |
+| `src/` | Deterministic normalization, rules, scoring, recommendations, reporting, and WebMCP layer |
+| `fixtures/health_matrix.json` | Synthetic challenge fixture |
+| `outputs/index.html` | Self-contained challenge demo page |
+| `tests/` | Python and dependency-free JavaScript verification |
+| `PROVENANCE.md` | Conservative provenance statement |
+| `docs/WEBMCP_CHALLENGE_DELTA.md` | Pre-existing versus challenge-period work |
 
-For each applicable category:
+## Challenge Provenance
 
-`category score = 100 × (1 − unique flagged records ÷ applicable records)`
+See [PROVENANCE.md](PROVENANCE.md), [the WebMCP challenge delta](docs/WEBMCP_CHALLENGE_DELTA.md), and the annotated tag `pre-webmcp-baseline-import-2026-08-31`.
 
-Weights are missing owner 30%, stale open deals 30%, name quality 15%, and contact activity 25%. Categories with no applicable records are excluded and the remaining weights are renormalized.
+No pre-August-25 Git repository existed. The baseline Git import was truthfully created on August 31, 2026, from work originally created and last modified locally on August 20–21. The import does not claim earlier Git history, and local filesystem dates are supporting rather than immutable historical proof. WebMCP functionality begins only in later challenge-period commits.
 
-Missing Owner applies to all contacts and deals, including closed deals. Stale open deals use a 30-day threshold; contact activity uses a 90-day threshold. Queue priority combines explicit severity points and bounded age bonuses, consolidates issues by record, caps priority at 100, and renders the top 20 rows.
+## License
 
-## MVP boundaries
+Licensed under the [MIT License](LICENSE).
 
-- MCP invocation remains outside the deterministic engine; the application consumes read-only search-result envelopes.
-- Rules and weights are prototype policy choices, not universal standards or customer-validated thresholds.
-- Run-local aliases depend on result order and are not durable cross-run identifiers.
-- Contact activity uses three approved summary fields and is not a complete engagement audit.
-- Name checks identify explicit formatting defects only and do not judge cultural or subjective validity.
-- The current test portal contains two synthetic contacts and no deals, so its report demonstrates connectivity rather than balanced coverage.
-- There is no multi-portal deployment, authentication layer, scheduler, historical trend store, remediation workflow, or production monitoring.
+## Live Demo
+
+TBD — WebMCP Challenge public deployment
+
+## Demo Video
+
+TBD — public YouTube demo
