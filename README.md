@@ -97,7 +97,7 @@ Then open `http://127.0.0.1:8765/outputs/index.html` in a WebMCP-capable browser
 
 ## Test with ChatGPT
 
-Open the locally served report in ChatGPT's in-app browser, then use this validated sequence:
+Open the deployed report in ChatGPT's in-app browser, then use this validated sequence:
 
 1. **Summary:** “Using the open CRM Health Doctor page's `get_crm_health_summary` site tool, summarize the synthetic CRM's overall health, evaluated scope, and weakest category. Do not infer from the visible HTML.”
 2. **Prioritization:** “Using the open page's `list_priority_issues` site tool, return one contact issue in the `missing_owner` category with minimum priority 40 and limit 1. Tell me which alias the page highlighted.”
@@ -110,7 +110,7 @@ The validated synthetic result selects `C-008` at priority 95 and visibly focuse
 The Chrome gate was validated with WebMCP testing enabled:
 
 1. Open `chrome://flags/#enable-webmcp-testing`, enable WebMCP testing, and relaunch Chrome.
-2. Serve and open the local report URL shown above.
+2. Open the deployed report, or serve and open the local report URL shown above.
 3. In DevTools, discover the registered tools:
 
 ```js
@@ -120,16 +120,20 @@ tools.map(({ name }) => name);
 
 The validated result contained exactly `explain_priority_issue`, `get_crm_health_summary`, and `list_priority_issues`.
 
-To reproduce the tested priority execution:
+To reproduce the tested priority execution in the validated Chrome build, pass the tool input as serialized JSON:
 
 ```js
 const priorityTool = tools.find(({ name }) => name === "list_priority_issues");
-await document.modelContext.executeTool(priorityTool, {
-  category: "missing_owner",
-  objectType: "contact",
-  minPriority: 40,
-  limit: 1,
-});
+const result = await document.modelContext.executeTool(
+  priorityTool,
+  JSON.stringify({
+    category: "missing_owner",
+    objectType: "contact",
+    minPriority: 40,
+    limit: 1,
+  })
+);
+result;
 ```
 
 The tested result returned two total matches, one bounded result, alias `C-008`, and priority 95; the report focused `C-008`. These instructions document that tested Chrome flow only and do not claim broader browser compatibility.
@@ -168,7 +172,7 @@ Licensed under the [MIT License](LICENSE).
 
 ## Live Demo
 
-TBD — WebMCP Challenge public deployment
+https://crm-health-doctor-webmcp.onrender.com
 
 ## Demo Video
 
