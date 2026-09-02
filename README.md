@@ -176,4 +176,4 @@ https://crm-health-doctor-webmcp.onrender.com
 
 ## Demo Video
 
-TBD — public YouTube demo
+https://youtu.be/pIw-JPtrdm4
