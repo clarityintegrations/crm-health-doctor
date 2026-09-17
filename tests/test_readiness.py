@@ -6,6 +6,10 @@ from unittest.mock import patch
 
 from readiness.contracts import INPUT_SCHEMA, OUTPUT_SCHEMA, DIMENSIONS, SECTIONS, validate, ValidationError
 from readiness.evidence import build_payload, reference_map
+from readiness.validation import validate_assessment
+from readiness.astra import AstraAdapter, Unavailable, request_json, MODEL
+from readiness.service import assess
+from urllib.error import HTTPError
 
 
 def mock_assessment(payload):
@@ -59,5 +63,99 @@ class EvidenceTests(unittest.TestCase):
             validate(mock_assessment(build_payload(a)), OUTPUT_SCHEMA)
 
 
-if __name__ == '__main__':
-    unittest.main()
+class AdapterTests(unittest.TestCase):
+    def envelope(self, payload, result=None):
+        return {'id': 'resp_mock', 'model': MODEL, 'status': 'completed',
+                'output': [{'type': 'message', 'content': [{'type': 'output_text',
+                             'text': json.dumps(result or mock_assessment(payload))}]}]}
+
+    def test_valid_mock_both_scenarios_and_request_contract(self):
+        for alias in ('C-008', 'C-001'):
+            def transport(req, timeout):
+                body = json.loads(req.data)
+                self.assertEqual(body['model'], 'gpt-6-astra')
+                self.assertEqual(body['reasoning']['effort'], 'medium')
+                self.assertEqual(body['text']['format']['schema'], OUTPUT_SCHEMA)
+                self.assertTrue(body['text']['format']['strict'])
+                self.assertFalse(body['store'])
+                self.assertNotIn('tools', body)
+                self.assertLessEqual(timeout, 60)
+                return self.envelope(json.loads(body['input']))
+            with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel', 'ASTRA_REASONING_EFFORT': 'medium'}):
+                result = assess(alias, AstraAdapter(transport))
+            self.assertEqual(result['status'], 'available')
+            self.assertIsNone(result['assessment']['overall_readiness_score'])
+            self.assertTrue(all(v is None for v in result['assessment']['dimension_scores'].values()))
+
+    def test_missing_key(self):
+        with patch.dict(os.environ, {}, clear=True):
+            r = assess('C-008')
+        self.assertEqual(r['error_code'], 'missing_key')
+        self.assertEqual(len(r['evidence']['findings']), 3)
+        self.assertIsNone(r['assessment'])
+
+    def test_transport_and_secret_safe_errors(self):
+        for error in [TimeoutError('test-secret-sentinel'), RuntimeError('test-secret-sentinel'),
+                      Unavailable('access_denied'), Unavailable('api_error')]:
+            def transport(req, timeout): raise error
+            with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel'}):
+                r = assess('C-008', AstraAdapter(transport))
+            self.assertEqual(r['status'], 'unavailable')
+            self.assertNotIn('test-secret-sentinel', json.dumps(r))
+            self.assertEqual(len(r['evidence']['findings']), 3)
+
+    def test_provider_http_errors_are_sanitized(self):
+        for code in (401, 403, 404, 429, 500):
+            with patch('readiness.astra.build_opener') as opener:
+                opener.return_value.open.side_effect = HTTPError('hidden', code, 'test-secret-sentinel', {}, None)
+                with self.assertRaises(Unavailable) as caught:
+                    request_json(None)
+                self.assertNotIn('test-secret', str(caught.exception))
+                self.assertEqual(caught.exception.code, 'access_denied' if code < 405 else 'api_error')
+
+    def test_malformed_partial_refusal_wrong_model_and_secret_echo(self):
+        p = build_payload('C-008')
+        variants = []
+        for text in ('{', '{}', 'test-secret-sentinel'):
+            e = self.envelope(p)
+            e['output'][0]['content'][0]['text'] = text
+            variants.append(e)
+        for field, value in (('status', 'incomplete'), ('model', 'other-model')):
+            e = self.envelope(p); e[field] = value; variants.append(e)
+        e = self.envelope(p); e['output'][0]['content'] = [{'type': 'refusal'}]; variants.append(e)
+        for response in variants:
+            with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel'}):
+                r = assess('C-008', AstraAdapter(lambda req, timeout: response))
+            self.assertEqual(r['status'], 'unavailable')
+            self.assertIsNone(r['assessment'])
+            self.assertNotIn('test-secret-sentinel', json.dumps(r))
+
+    def test_invalid_evidence_and_human_review(self):
+        p = build_payload('C-008')
+        cases = []
+        r = mock_assessment(p); r['critical_blockers'][0]['evidence_references'] = ['invented']; cases.append(r)
+        r = mock_assessment(p); r['critical_blockers'][0]['evidence_references'] = ['scope:integrations']; cases.append(r)
+        r = mock_assessment(p); r['critical_blockers'][0]['human_review_required'] = False; cases.append(r)
+        r = mock_assessment(p); r['dimension_scores']['knowledge'] = 0; cases.append(r)
+        r = mock_assessment(p); r['overall_readiness_score'] = 100; cases.append(r)
+        r = mock_assessment(p); r['evidence_gaps'] = []; cases.append(r)
+        r = mock_assessment(p); r['critical_blockers'][0].update(basis='direct', statement='An integration is broken.'); cases.append(r)
+        r = mock_assessment(p); del r['limitations']; cases.append(r)
+        for r in cases:
+            with self.assertRaises(ValidationError): validate_assessment(r, p)
+
+    def test_healthy_missing_evidence_is_not_negative_fact(self):
+        p = build_payload('C-001')
+        r = mock_assessment(p)
+        validate_assessment(r, p)
+        r['critical_blockers'] = [copy.deepcopy(r['recommended_next_actions'][0])]
+        with self.assertRaises(ValidationError): validate_assessment(r, p)
+
+    def test_reasoning_config_and_access_probe(self):
+        with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel', 'ASTRA_REASONING_EFFORT': 'max'}):
+            self.assertEqual(assess('C-008')['error_code'], 'invalid_configuration')
+        with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel'}):
+            self.assertTrue(AstraAdapter(lambda req, timeout: {'id': MODEL}).check_access())
+
+
+if __name__ == '__main__': unittest.main()
