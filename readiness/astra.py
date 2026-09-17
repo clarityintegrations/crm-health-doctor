@@ -7,6 +7,7 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 from .contracts import INPUT_SCHEMA, OUTPUT_SCHEMA, ValidationError, validate
 from .validation import validate_assessment
+from .generation import generation_instructions
 
 MODEL = 'gpt-6-astra'
 ENDPOINT = 'https://api.openai.com/v1/responses'
@@ -108,7 +109,7 @@ class AstraAdapter:
         effort = os.environ.get('ASTRA_REASONING_EFFORT', 'medium')
         if effort not in ('low', 'medium', 'high'):
             raise Unavailable('invalid_configuration')
-        body = {'model': MODEL, 'store': False, 'instructions': PROMPT,
+        body = {'model': MODEL, 'store': False, 'instructions': PROMPT + '\n\n' + generation_instructions(payload),
                 'input': json.dumps(payload), 'reasoning': {'effort': effort},
                 'max_output_tokens': 6500,
                 'text': {'format': {'type': 'json_schema', 'name': 'agent_readiness',
