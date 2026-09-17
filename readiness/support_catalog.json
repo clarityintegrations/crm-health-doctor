@@ -1,0 +1,177 @@
+{
+  "claims": [
+    {
+      "class": "data_risk",
+      "basis": "inference",
+      "statement": "The checked fields warrant review before agent use; 40/100 is a coarse qualitative model estimate limited to the implemented checks, not measured organizational readiness.",
+      "rationale": "Missing ownership, flagged name formatting and missing approved activity signals could impair assignment-dependent handling, personalization and recency decisions."
+    },
+    {
+      "class": "gap_process",
+      "basis": "evidence_gap",
+      "statement": "Process readiness cannot be established from the supplied evidence.",
+      "rationale": "Business processes, lifecycle, routing rules and qualification criteria were not supplied."
+    },
+    {
+      "class": "gap_knowledge",
+      "basis": "evidence_gap",
+      "statement": "Knowledge readiness cannot be established from the supplied evidence.",
+      "rationale": "Knowledge-base, support-policy and answer-quality evidence were not supplied."
+    },
+    {
+      "class": "gap_governance",
+      "basis": "evidence_gap",
+      "statement": "Governance readiness cannot be established from the supplied evidence.",
+      "rationale": "Consent, permissions, oversight policy and assignment-correctness evidence were not supplied."
+    },
+    {
+      "class": "gap_integrations",
+      "basis": "evidence_gap",
+      "statement": "Integration readiness cannot be established from the supplied evidence.",
+      "rationale": "Integration configuration, synchronization health and delivery evidence were not supplied."
+    },
+    {
+      "class": "findings_review",
+      "basis": "inference",
+      "statement": "A human-supervised assistant could summarize the supplied findings into a record-review checklist without changing CRM data.",
+      "rationale": "The three deterministic findings provide specific review targets and priorities, supporting bounded summarization rather than autonomous decisions."
+    },
+    {
+      "class": "name_cleanup",
+      "basis": "inference",
+      "statement": "Name-cleanup suggestions could be considered after a human verifies the intended name.",
+      "rationale": "The formatting finding identifies whitespace, capitalization and digit concerns, but does not establish the correct replacement."
+    },
+    {
+      "class": "activity_no_autonomy",
+      "basis": "inference",
+      "statement": "Autonomous engagement-recency or follow-up decisions are not supported by this snapshot's activity evidence.",
+      "rationale": "The missing approved activity signal prevents reliable recency determination from this snapshot; it does not establish actual inactivity."
+    },
+    {
+      "class": "owner_first",
+      "basis": "inference",
+      "statement": "First, have a human investigate the blank owner and determine any appropriate assignment.",
+      "rationale": "Priority 40 is the highest supplied finding priority; missing ownership could affect accountability and routing."
+    },
+    {
+      "class": "activity_second",
+      "basis": "inference",
+      "statement": "Second, verify activity-signal completeness before interpreting engagement or recency.",
+      "rationale": "Priority 35 is next; the finding identifies missing approved signals, not proven inactivity."
+    },
+    {
+      "class": "name_third",
+      "basis": "inference",
+      "statement": "Third, verify the intended name before proposing formatting corrections.",
+      "rationale": "Priority 20 follows the other findings; the flagged formatting could affect matching and personalization."
+    },
+    {
+      "class": "findings_verify",
+      "basis": "inference",
+      "statement": "Ask a human reviewer to validate the three findings and approve any proposed remediation; no CRM change is implied.",
+      "rationale": "These findings identify review targets but do not establish correct replacement values or the completeness of activity evidence."
+    },
+    {
+      "class": "acquire_scope",
+      "basis": "evidence_gap",
+      "statement": "Request process, knowledge, governance and integration evidence for human review before broader readiness assessment.",
+      "rationale": "The supplied scope statements leave these four dimensions unevaluated."
+    },
+    {
+      "class": "data_unscored",
+      "basis": "inference",
+      "statement": "The supplied checks support a limited review of this record, not a data-readiness score.",
+      "rationale": "Owner presence, the name-format result and activity recency provide narrow review inputs; assignment correctness, identity and broader data quality remain unverified."
+    },
+    {
+      "class": "gap_process",
+      "basis": "evidence_gap",
+      "statement": "Process readiness cannot be assessed from the supplied evidence.",
+      "rationale": "Business process, lifecycle, routing and qualification evidence was not supplied; this does not establish process defects."
+    },
+    {
+      "class": "gap_knowledge",
+      "basis": "evidence_gap",
+      "statement": "Knowledge readiness cannot be assessed from the supplied evidence.",
+      "rationale": "Knowledge-base, support-policy and answer-quality evidence was not supplied."
+    },
+    {
+      "class": "gap_governance",
+      "basis": "evidence_gap",
+      "statement": "Governance readiness cannot be assessed from the supplied evidence.",
+      "rationale": "Consent, permissions, oversight and assignment-correctness evidence was not supplied; owner presence does not establish correct assignment."
+    },
+    {
+      "class": "gap_integrations",
+      "basis": "evidence_gap",
+      "statement": "Integration readiness cannot be assessed from the supplied evidence.",
+      "rationale": "Configuration, synchronization-health and delivery evidence was not supplied."
+    },
+    {
+      "class": "observations_review",
+      "basis": "inference",
+      "statement": "A human-supervised assistant could summarize the supplied checks for reviewer inspection without changing the CRM or contacting anyone.",
+      "rationale": "The explicit owner, name-format and activity observations can support a traceable summary. This narrow use does not require asserting identity, correct ownership or customer behavior."
+    },
+    {
+      "class": "observations_verify",
+      "basis": "inference",
+      "statement": "Have a reviewer verify identity, owner assignment and activity-signal coverage before relying on this record operationally.",
+      "rationale": "Identity and assignment correctness are explicitly unverified, while the activity observation describes only an approved signal at evaluation, not complete customer behavior."
+    },
+    {
+      "class": "acquire_scope",
+      "basis": "evidence_gap",
+      "statement": "Request process, knowledge, governance and integration evidence for human review before assessing broader agent deployment.",
+      "rationale": "These dimensions are not established by the supplied snapshot; requesting evidence does not imply that existing controls or systems are defective."
+    }
+  ],
+  "gaps": {
+    "process": [
+      "Process, lifecycle, routing and qualification evidence is needed to assess this dimension.",
+      "Process, lifecycle, routing and qualification evidence requires collection and human review."
+    ],
+    "knowledge": [
+      "Knowledge-base, support-policy and answer-quality evidence is needed to assess this dimension.",
+      "Knowledge-base, support-policy and answer-quality evidence requires collection and human review."
+    ],
+    "governance": [
+      "Consent, permissions, oversight and assignment-correctness evidence is needed to assess this dimension.",
+      "Consent, permissions, oversight and assignment-correctness evidence requires collection and human review."
+    ],
+    "integrations": [
+      "Integration configuration, synchronization and delivery evidence is needed to assess this dimension.",
+      "Configuration, synchronization-health and delivery evidence requires collection and human review."
+    ],
+    "data": [
+      "Broader data readiness is unestablished by three checks on one synthetic record; human verification is required."
+    ]
+  },
+  "limitations": [
+    {
+      "text": "This assessment covers one synthetic contact record and only the supplied deterministic checks. The data score is a qualitative estimate, not a calibrated readiness measurement.",
+      "requires": "bounded_scope"
+    },
+    {
+      "text": "Process, knowledge, governance and integrations are incompletely evidenced; overall readiness cannot be established. Missing evidence does not establish broken capabilities.",
+      "requires": "bounded_scope"
+    },
+    {
+      "text": "All assessments, gaps, opportunities and proposed actions require human verification. Missing activity signals do not prove inactivity, and no CRM changes have occurred through this assessment.",
+      "requires": "weak_activity"
+    },
+    {
+      "text": "This assessment covers one synthetic contact. Zero supplied findings means no detected issues under the implemented checks, not proven readiness.",
+      "requires": "no_findings"
+    },
+    {
+      "text": "Process, knowledge, governance and integrations are insufficiently evidenced; the snapshot cannot establish overall agent readiness.",
+      "requires": "bounded_scope"
+    },
+    {
+      "text": "All conclusions and proposed actions require human verification. Activity signals may be incomplete and describe evaluation-time recency only; no CRM change or autonomous deployment is asserted.",
+      "requires": "bounded_scope"
+    }
+  ]
+}
