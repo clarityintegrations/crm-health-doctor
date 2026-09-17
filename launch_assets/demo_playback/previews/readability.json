@@ -1,0 +1,124 @@
+{
+  "browser": "153.0.8010.47",
+  "checks": [
+    {
+      "page": "c008",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "content": {
+        "width": 1920,
+        "height": 1080
+      },
+      "overflow": []
+    },
+    {
+      "page": "c008",
+      "viewport": {
+        "width": 1920,
+        "height": 950
+      },
+      "content": {
+        "width": 1920,
+        "height": 950
+      },
+      "overflow": []
+    },
+    {
+      "page": "c008",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "content": {
+        "width": 1536,
+        "height": 967
+      },
+      "overflow": []
+    },
+    {
+      "page": "c001",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "content": {
+        "width": 1920,
+        "height": 1080
+      },
+      "overflow": []
+    },
+    {
+      "page": "c001",
+      "viewport": {
+        "width": 1920,
+        "height": 950
+      },
+      "content": {
+        "width": 1920,
+        "height": 950
+      },
+      "overflow": []
+    },
+    {
+      "page": "c001",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "content": {
+        "width": 1536,
+        "height": 945
+      },
+      "overflow": []
+    },
+    {
+      "page": "index",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "content": {
+        "width": 1920,
+        "height": 1080
+      },
+      "overflow": []
+    },
+    {
+      "page": "index",
+      "viewport": {
+        "width": 1920,
+        "height": 950
+      },
+      "content": {
+        "width": 1920,
+        "height": 950
+      },
+      "overflow": []
+    },
+    {
+      "page": "index",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "content": {
+        "width": 1536,
+        "height": 864
+      },
+      "overflow": []
+    }
+  ],
+  "requests": [
+    "/launch_assets/demo_playback/c008.html",
+    "/launch_assets/demo_playback/styles.css",
+    "/launch_assets/demo_playback/script.js",
+    "/demo_artifacts/c008_real_astra_sanitized.json",
+    "/launch_assets/demo_playback/c001.html",
+    "/demo_artifacts/c001_real_astra_sanitized.json",
+    "/launch_assets/demo_playback/index.html"
+  ],
+  "jsonBindingCheck": "passed; intercepted preview response only",
+  "missingArtifactCheck": "passed; explicit error without fallback assessment"
+}
