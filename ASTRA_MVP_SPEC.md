@@ -1,6 +1,8 @@
 # CRM Health Doctor — Agent Readiness Edition
 
-Status: offline implementation complete; live acceptance blocked by API credit balance. The key was loaded securely and `gpt-6-astra` model access was confirmed. Assessment requests returned HTTP 429 / `credit_balance_exhausted`. No successful real assessment or sanitized live example exists. Verified September 16, 2026 (America/Bogota).
+Status updated September 17, 2026: real `gpt-6-astra` access and successful C-008/C-001 assessments are verified. Authentic sanitized captures were committed in `3c6483d`. Independent adversarial QA subsequently found P0 claim-support and score-admissibility defects. This remediation adds a fail-closed support policy and offline production-path counterexamples; independent re-review remains the launch gate. The under-150-second narrated recording has not yet been measured.
+
+Historical September 16 status (superseded, retained for provenance): API requests returned HTTP 429 / `credit_balance_exhausted`; no successful real assessment or sanitized example existed at that time. Credits were subsequently restored. This is no longer the current blocker.
 
 ## Protected V1 and concurrent work
 
@@ -20,7 +22,7 @@ Reuse `load_dataset`, `evaluate`, `build_queue`, `calculate_score`, `guidance_fo
 
 ## Implemented input contract
 
-Versioned JSON schema with required keys, `additionalProperties: false`, bounded lists and strings:
+Strict JSON schema with required keys, `additionalProperties: false`, bounded lists and strings (no schema-version field yet):
 
 - `audit_id`: stable identifier derived from fixture, evaluation configuration, and record alias.
 - `record`: alias and entity type; omit raw CRM ID, names, emails, owner IDs, and raw payload.
@@ -42,9 +44,49 @@ Required top-level keys:
 - `critical_blockers`, `viable_agent_opportunities`, `conditional_agent_opportunities`, `not_ready_agent_opportunities`, `remediation_priorities`, `recommended_next_actions`: bounded claim lists.
 - `evidence_references`, `evidence_gaps`, `confidence`, `limitations`.
 
-Every claim carries a concise statement, basis (`direct`, `inference`, `assumption`, or `evidence_gap`), valid supplied reference IDs, and `human_review_required: true`. Inferences must explain the connection. Assumptions and evidence gaps must be presented explicitly. Missing evidence cannot establish a factual blocker or justify a negative score. Unknown dimensions must have null scores and a description of the missing evidence. Do not aggregate only the known dimensions into an apparently comprehensive overall score; an overall null is valid and expected for limited CRM evidence.
+Every claim carries a concise statement, basis (`direct`, `inference`, `assumption`, or `evidence_gap` in the existing schema), valid supplied reference IDs, and `human_review_required: true`. The launch support policy is narrower than that schema: unconstrained assumptions are rejected. Missing evidence cannot establish a factual blocker or justify a score. Unknown dimensions must have null scores and an explicit gap. Overall readiness remains null for this limited contract.
 
-Reject malformed JSON, extra fields, out-of-range values, unknown references, unsupported scored dimensions, or weakened human-review requirements. Schema/reference validation establishes structure and traceability, not complete semantic truth; inspect real model outputs for unsupported factual claims before accepting the slice.
+Reject malformed JSON, extra fields, out-of-range values, unknown references, unsupported scored dimensions, weakened human-review requirements, or claims outside the supported vocabulary. Schema/reference validity alone is insufficient.
+
+### P0 deterministic support policy
+
+`readiness/support_policy.py` enforces reviewed claim classes from
+`readiness/support_catalog.json`. This is a closed controlled-language policy, not
+arbitrary natural-language entailment, keyword matching, or a second LLM judge.
+Every statement/rationale pair must exactly match approved wording and satisfy
+evidence-type and placement predicates. Gap details and limitations are also
+constrained; they cannot carry invented facts around the claim validator.
+
+| Evidence | Permitted implications |
+| --- | --- |
+| Malformed name | Conditional human-verified cleanup; no invented replacement identity/name |
+| Missing owner | Accountability/routing risk and human assignment verification; no asserted routing workflow or correct owner |
+| Weak activity | Incomplete signal/recency confidence and no autonomous recency decision from that snapshot; not proof of inactivity |
+| Bounded observations with no findings | Supervised evidence summary and verification; not readiness certification |
+| Scope limits | Unknown dimensions and evidence acquisition; never factual defects, numeric scores or authorization |
+
+Direct claims require an exact concrete evidence quote AND a fixed safe rationale.
+Inferences require applicable concrete evidence, an approved claim class and the
+correct output section. There is no approved wording granting consent, permissions,
+write access, execution, autonomous deployment, or exemption from human review.
+Numbers and ordering asserted in the reviewed remediation wording are checked
+against actual finding priorities. Rules operate on finding types, not record aliases.
+
+Numeric Data estimates require a cited, approved concrete finding combination
+and the explicit `data_risk` scoring claim. Scope-only references, clean observations,
+direct quotes and unscored/gap claims cannot justify a number. Thus C-001 remains
+all-null; C-008's authentic 40 estimate remains admissible. The score must match
+the number in the reviewed scoring statement, remains in coarse steps of five,
+and is not a new deterministic formula. All other dimensions and overall readiness
+remain null. The authentic artifacts remain byte-for-byte unchanged and validate.
+
+The phrase catalog incorporates independently reviewed wording from the authentic
+captures, but production never reads or trusts demo artifacts as validation policy.
+This deliberate safety/availability tradeoff rejects novel safe paraphrases too.
+The existing prompt and provider schema were not changed to force catalog wording;
+fresh inference may therefore fail closed more often. Do not weaken the validator
+or claim live reliability based on preserved examples. Vocabulary expansion or
+provider guidance requires separate review, not automatic acceptance of new output.
 
 ## Comparison scenarios
 
@@ -65,7 +107,7 @@ Required tests: both fixture scenarios; evidence payload schema; strict output s
 
 Live acceptance requires actual Responses API calls to `gpt-6-astra` for both scenarios, validated outputs with traceable references, credible differences, and safe failure behavior. Mocks do not satisfy runtime acceptance. Retain only non-secret provenance such as model, response ID, timestamp, and payload hash when recording validation evidence.
 
-Under-three-minute demonstration: show V1 deterministic C-008 findings; request Astra assessment and inspect cited implications plus unknown dimensions; compare C-001; demonstrate unavailable AI while deterministic evidence remains visible.
+Recording path: show deterministic C-008 evidence, its explicitly labeled previously generated real Astra capture, then C-001's evidence and capture. Keep human-review and unknown-dimension boundaries visible. Use the 150-second narration plan in `demo_artifacts/README.md`; do not present playback as live inference. The timing still needs a measured rehearsal.
 
 ## Runtime, schemas, and tests
 
@@ -109,14 +151,27 @@ All tests use synthetic mocks and need no key or external API access:
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
 node tests/test_webmcp_contract.mjs
 node tests/test_readiness_ui.mjs
+node tests/test_readiness_adversarial_ui.mjs
 ```
 
 Server tests require permission to bind a loopback socket. Existing V1 tests are unmodified. New tests cover evidence construction, schema/reference rejection, unknown dimensions, mocks for both scenarios, missing key, timeout, malformed/partial/refused output, API/auth/model errors, quota failure, secret-safe errors/logs, same-origin HTTP behavior, text-only presentation, and failure retention of deterministic findings.
 
 ## Live validation status and next gate
 
-Model discovery succeeded for exactly `gpt-6-astra`. Three assessment attempts (initial request, bounded-code retry, sanitized diagnostic) were rejected by the provider before any model output, with the final diagnostic confirming HTTP 429 / `credit_balance_exhausted`. No prompt refinement has been spent. No live result is represented by the test mocks.
+Real access for exactly `gpt-6-astra` was verified after credits were restored.
+Both real C-008 and C-001 assessments passed their original semantic review and
+were preserved under `demo_artifacts/` in commit `3c6483d`. These are not mocks.
 
-Add API credits to the relevant OpenAI project/organization, then repeat the access check and both assessments through the production adapter. Validate schema and references, manually inspect factual/inference boundaries, and measure the full demo. A successful model-discovery request does not establish sufficient credits for inference. Live output quality and the under-three-minute live flow remain unverified until the billing blocker is resolved.
+Later diagnostic testing observed one HTTP-200/schema-valid response rejected by
+traceability, a separate approximately 60-second timeout, and a subsequent successful
+C-008 UI assessment. The first rejecting rule was not retained. This demonstrates
+runtime variability, not a proven deterministic UI/server defect. No new live calls
+are part of this P0 remediation.
+
+The independent audit's current blockers were unsupported claims accepted with valid
+references (P0-1) and scope-only/contradictory Data scores (P0-2). They are addressed
+by the bounded support and score-admissibility policy above, with all 13 reported
+counterexample classes rejected through adapter, service, HTTP and unchanged UI tests.
+Independent review of the patch and a measured under-150-second recording remain.
 
 Official model reference: https://developers.openai.com/api/docs/models/gpt-6-astra
