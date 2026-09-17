@@ -1,0 +1,305 @@
+{
+  "record_id": "C-008",
+  "record_id_kind": "synthetic alias, not a raw CRM identifier",
+  "model": "gpt-6-astra",
+  "real_inference": true,
+  "sanitized": true,
+  "display_label": "Previously generated real GPT-6 Astra assessment",
+  "playback_is_live_inference": false,
+  "capture_source": "Captured successful diagnostic UI assessment",
+  "evidence": {
+    "audit_id": "audit-fc10cefd3a98c3ad8d1e",
+    "record": {
+      "alias": "C-008",
+      "entity_type": "contact"
+    },
+    "findings": [
+      {
+        "finding_id": "C-008:malformed_name",
+        "finding_type": "malformed_name",
+        "severity_points": 20,
+        "priority": 20,
+        "evidence": {
+          "detail": "first name has leading or trailing whitespace; first name has repeated internal whitespace; first name is ALL CAPS; last name contains digits."
+        },
+        "deterministic_impact": "Suspicious formatting can reduce matching, personalization, and reporting reliability.",
+        "human_review_required": true
+      },
+      {
+        "finding_id": "C-008:missing_owner",
+        "finding_type": "missing_owner",
+        "severity_points": 40,
+        "priority": 40,
+        "evidence": {
+          "detail": "Owner is absent or blank."
+        },
+        "deterministic_impact": "Unowned records can miss routing, accountability, and follow-up.",
+        "human_review_required": true
+      },
+      {
+        "finding_id": "C-008:weak_activity",
+        "finding_type": "weak_activity",
+        "severity_points": 35,
+        "priority": 35,
+        "evidence": {
+          "detail": "No approved contact activity signal exists; creation time is not treated as engagement."
+        },
+        "deterministic_impact": "Missing approved engagement signals makes recency and follow-up decisions unreliable.",
+        "human_review_required": true
+      }
+    ],
+    "observations": [
+      {
+        "evidence_id": "C-008:owner",
+        "detail": "Owner field is absent or blank."
+      },
+      {
+        "evidence_id": "C-008:name",
+        "detail": "Name-format checks flagged defects."
+      },
+      {
+        "evidence_id": "C-008:activity",
+        "detail": "No approved contact activity signal exists in this snapshot."
+      }
+    ],
+    "scope_limits": [
+      {
+        "evidence_id": "scope:data",
+        "dimension": "data",
+        "detail": "Only owner presence, name formatting and approved activity recency are checked for one synthetic record. No findings is not proven agent readiness."
+      },
+      {
+        "evidence_id": "scope:process",
+        "dimension": "process",
+        "detail": "No business process, lifecycle, routing rules or qualification criteria were supplied."
+      },
+      {
+        "evidence_id": "scope:knowledge",
+        "dimension": "knowledge",
+        "detail": "No knowledge-base, support policy or answer-quality evidence was supplied."
+      },
+      {
+        "evidence_id": "scope:governance",
+        "dimension": "governance",
+        "detail": "No consent, permissions, oversight policy or owner-assignment correctness was supplied."
+      },
+      {
+        "evidence_id": "scope:integrations",
+        "dimension": "integrations",
+        "detail": "No integration configuration, synchronization health or delivery evidence was supplied."
+      }
+    ],
+    "audit_metadata": {
+      "finding_count": 3,
+      "highest_priority": 95,
+      "source": "fixture",
+      "evaluation_date": "2026-08-20T12:00:00+00:00",
+      "generated_at": "2026-09-17T14:02:41.348525+00:00"
+    }
+  },
+  "readiness_result": {
+    "overall_readiness_score": null,
+    "dimension_scores": {
+      "data": 40,
+      "process": null,
+      "knowledge": null,
+      "governance": null,
+      "integrations": null
+    },
+    "dimension_assessments": {
+      "data": {
+        "statement": "The checked fields warrant review before agent use; 40/100 is a coarse qualitative model estimate limited to the implemented checks, not measured organizational readiness.",
+        "basis": "inference",
+        "rationale": "Missing ownership, flagged name formatting and missing approved activity signals could impair assignment-dependent handling, personalization and recency decisions.",
+        "evidence_references": [
+          "C-008:missing_owner",
+          "C-008:malformed_name",
+          "C-008:weak_activity",
+          "scope:data"
+        ],
+        "human_review_required": true
+      },
+      "process": {
+        "statement": "Process readiness cannot be established from the supplied evidence.",
+        "basis": "evidence_gap",
+        "rationale": "Business processes, lifecycle, routing rules and qualification criteria were not supplied.",
+        "evidence_references": [
+          "scope:process"
+        ],
+        "human_review_required": true
+      },
+      "knowledge": {
+        "statement": "Knowledge readiness cannot be established from the supplied evidence.",
+        "basis": "evidence_gap",
+        "rationale": "Knowledge-base, support-policy and answer-quality evidence were not supplied.",
+        "evidence_references": [
+          "scope:knowledge"
+        ],
+        "human_review_required": true
+      },
+      "governance": {
+        "statement": "Governance readiness cannot be established from the supplied evidence.",
+        "basis": "evidence_gap",
+        "rationale": "Consent, permissions, oversight policy and assignment-correctness evidence were not supplied.",
+        "evidence_references": [
+          "scope:governance"
+        ],
+        "human_review_required": true
+      },
+      "integrations": {
+        "statement": "Integration readiness cannot be established from the supplied evidence.",
+        "basis": "evidence_gap",
+        "rationale": "Integration configuration, synchronization health and delivery evidence were not supplied.",
+        "evidence_references": [
+          "scope:integrations"
+        ],
+        "human_review_required": true
+      }
+    },
+    "critical_blockers": [],
+    "viable_agent_opportunities": [
+      {
+        "statement": "A human-supervised assistant could summarize the supplied findings into a record-review checklist without changing CRM data.",
+        "basis": "inference",
+        "rationale": "The three deterministic findings provide specific review targets and priorities, supporting bounded summarization rather than autonomous decisions.",
+        "evidence_references": [
+          "C-008:missing_owner",
+          "C-008:weak_activity",
+          "C-008:malformed_name"
+        ],
+        "human_review_required": true
+      }
+    ],
+    "conditional_agent_opportunities": [
+      {
+        "statement": "Name-cleanup suggestions could be considered after a human verifies the intended name.",
+        "basis": "inference",
+        "rationale": "The formatting finding identifies whitespace, capitalization and digit concerns, but does not establish the correct replacement.",
+        "evidence_references": [
+          "C-008:malformed_name"
+        ],
+        "human_review_required": true
+      }
+    ],
+    "not_ready_agent_opportunities": [
+      {
+        "statement": "Autonomous engagement-recency or follow-up decisions are not supported by this snapshot's activity evidence.",
+        "basis": "inference",
+        "rationale": "The missing approved activity signal prevents reliable recency determination from this snapshot; it does not establish actual inactivity.",
+        "evidence_references": [
+          "C-008:weak_activity"
+        ],
+        "human_review_required": true
+      }
+    ],
+    "remediation_priorities": [
+      {
+        "statement": "First, have a human investigate the blank owner and determine any appropriate assignment.",
+        "basis": "inference",
+        "rationale": "Priority 40 is the highest supplied finding priority; missing ownership could affect accountability and routing.",
+        "evidence_references": [
+          "C-008:missing_owner"
+        ],
+        "human_review_required": true
+      },
+      {
+        "statement": "Second, verify activity-signal completeness before interpreting engagement or recency.",
+        "basis": "inference",
+        "rationale": "Priority 35 is next; the finding identifies missing approved signals, not proven inactivity.",
+        "evidence_references": [
+          "C-008:weak_activity"
+        ],
+        "human_review_required": true
+      },
+      {
+        "statement": "Third, verify the intended name before proposing formatting corrections.",
+        "basis": "inference",
+        "rationale": "Priority 20 follows the other findings; the flagged formatting could affect matching and personalization.",
+        "evidence_references": [
+          "C-008:malformed_name"
+        ],
+        "human_review_required": true
+      }
+    ],
+    "recommended_next_actions": [
+      {
+        "statement": "Ask a human reviewer to validate the three findings and approve any proposed remediation; no CRM change is implied.",
+        "basis": "inference",
+        "rationale": "These findings identify review targets but do not establish correct replacement values or the completeness of activity evidence.",
+        "evidence_references": [
+          "C-008:missing_owner",
+          "C-008:weak_activity",
+          "C-008:malformed_name"
+        ],
+        "human_review_required": true
+      },
+      {
+        "statement": "Request process, knowledge, governance and integration evidence for human review before broader readiness assessment.",
+        "basis": "evidence_gap",
+        "rationale": "The supplied scope statements leave these four dimensions unevaluated.",
+        "evidence_references": [
+          "scope:process",
+          "scope:knowledge",
+          "scope:governance",
+          "scope:integrations"
+        ],
+        "human_review_required": true
+      }
+    ],
+    "evidence_references": [
+      "C-008:missing_owner",
+      "C-008:weak_activity",
+      "C-008:malformed_name",
+      "scope:data",
+      "scope:process",
+      "scope:knowledge",
+      "scope:governance",
+      "scope:integrations"
+    ],
+    "evidence_gaps": [
+      {
+        "dimension": "process",
+        "detail": "Process, lifecycle, routing and qualification evidence is needed to assess this dimension.",
+        "evidence_references": [
+          "scope:process"
+        ]
+      },
+      {
+        "dimension": "knowledge",
+        "detail": "Knowledge-base, support-policy and answer-quality evidence is needed to assess this dimension.",
+        "evidence_references": [
+          "scope:knowledge"
+        ]
+      },
+      {
+        "dimension": "governance",
+        "detail": "Consent, permissions, oversight and assignment-correctness evidence is needed to assess this dimension.",
+        "evidence_references": [
+          "scope:governance"
+        ]
+      },
+      {
+        "dimension": "integrations",
+        "detail": "Integration configuration, synchronization and delivery evidence is needed to assess this dimension.",
+        "evidence_references": [
+          "scope:integrations"
+        ]
+      }
+    ],
+    "confidence": "low",
+    "limitations": [
+      "This assessment covers one synthetic contact record and only the supplied deterministic checks. The data score is a qualitative estimate, not a calibrated readiness measurement.",
+      "Process, knowledge, governance and integrations are incompletely evidenced; overall readiness cannot be established. Missing evidence does not establish broken capabilities.",
+      "All assessments, gaps, opportunities and proposed actions require human verification. Missing activity signals do not prove inactivity, and no CRM changes have occurred through this assessment."
+    ]
+  },
+  "provenance": {
+    "model": "gpt-6-astra",
+    "response_id": "resp_0bc02eacef81138e016aabf301a87487d29d9262caf23cd1b2",
+    "reasoning_effort": "medium",
+    "completed_at": "2026-09-17T14:03:19.282405+00:00",
+    "duration_seconds": 37.93,
+    "audit_id": "audit-fc10cefd3a98c3ad8d1e"
+  },
+  "content_sha256": "28c9857c88e5b3f9a67a86f894689ae8d2508cbc5dc2503d960596eeb5c4cc8a"
+}
