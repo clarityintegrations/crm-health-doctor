@@ -59,7 +59,17 @@ def request_json(request, timeout=60):
             raise Unavailable('invalid_response')
         return json.loads(raw)
     except HTTPError as error:
-        raise Unavailable('access_denied' if error.code in (401, 403, 404) else 'api_error') from None
+        code = 'access_denied' if error.code in (401, 403, 404) else 'api_error'
+        # Only allowlisted machine codes may leave this boundary, never messages.
+        try:
+            detail = json.loads(error.read(8192)).get('error', {})
+            if detail.get('code') in ('insufficient_quota', 'credit_balance_exhausted', 'rate_limit_exceeded',
+                                      'model_not_found', 'invalid_json_schema',
+                                      'unsupported_parameter', 'unsupported_value'):
+                code = detail['code']
+        except Exception:
+            pass
+        raise Unavailable(code) from None
     except (TimeoutError, socket.timeout):
         raise Unavailable('timeout') from None
     except URLError:

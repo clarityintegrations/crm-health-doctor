@@ -1,6 +1,6 @@
 # CRM Health Doctor — Agent Readiness Edition
 
-Status: specification only; runtime implementation is blocked pending an OpenAI API key available to the server process. No Astra assessment has been generated. Checked September 16, 2026.
+Status: offline implementation complete; live acceptance blocked by API credit balance. The key was loaded securely and `gpt-6-astra` model access was confirmed. Assessment requests returned HTTP 429 / `credit_balance_exhausted`. No successful real assessment or sanitized live example exists. Verified September 16, 2026 (America/Bogota).
 
 ## Protected V1 and concurrent work
 
@@ -18,27 +18,27 @@ Existing fixture and deterministic engine → structured evidence builder → se
 
 Reuse `load_dataset`, `evaluate`, `build_queue`, `calculate_score`, `guidance_for`, and the V1 report. Keep new code in a separate `readiness/` package. Do not alter V1 rules or the three WebMCP tools. Serve the unchanged V1 report and a small readiness panel through a separate localhost-only server. Only fixed synthetic scenarios may be selected; do not accept arbitrary CRM payloads, URLs, or provider endpoints from the browser. A user-triggered assessment request may contact the fixed OpenAI Responses endpoint. The key stays in server-side `OPENAI_API_KEY` and is never logged, returned, or committed.
 
-## Proposed input contract
+## Implemented input contract
 
 Versioned JSON schema with required keys, `additionalProperties: false`, bounded lists and strings:
 
 - `audit_id`: stable identifier derived from fixture, evaluation configuration, and record alias.
 - `record`: alias and entity type; omit raw CRM ID, names, emails, owner IDs, and raw payload.
-- `findings`: finding ID, known issue type/category, original numeric severity points and age bonus, original priority contribution, controlled evidence, deterministic impact, and `human_review_required: true`.
+- `findings`: finding ID, issue type, original numeric severity points, original priority contribution (severity plus age bonus), controlled evidence, deterministic impact, and `human_review_required: true`.
 - `observations`: identified, narrowly scoped check results for owner presence, name-format checks, and approved activity presence/age. Necessary to express positive evidence for a record with no findings. Passing a check does not establish business identity, consent, correct ownership, or complete engagement history.
 - `audit_metadata`: finding count, record priority, source `fixture`, snapshot evaluation date, separately labeled generation time, and audit scope. Do not substitute today's date for the preserved fixture evaluation date.
-- `evidence_gaps`: explicit scope limits. No supplied evidence establishes knowledge-base coverage, process design, enterprise governance, integration health, consent, or suitability for autonomous operation.
+- `scope_limits`: explicit scope limits. No supplied evidence establishes knowledge-base coverage, process design, enterprise governance, integration health, consent, or suitability for autonomous operation.
 
 Every observation, finding, and scope limit receives a stable reference ID. Derive evidence from existing normalized fields and deterministic results; do not send arbitrary record text as instructions.
 
-## Proposed output contract
+## Implemented output contract
 
 Use Responses API Structured Outputs with a strict JSON Schema, then validate locally before presentation. Preserve the exact model `gpt-6-astra`; do not silently fall back to another model.
 
 Required top-level keys:
 
 - `overall_readiness_score`: integer 0–100 or null when overall readiness cannot be justified.
-- `dimension_scores`: exactly `data`, `process`, `knowledge`, `governance`, `integrations`. Each contains nullable score, status (`assessed` or `insufficient_evidence`), rationale, and evidence references.
+- `dimension_scores`: exactly `data`, `process`, `knowledge`, `governance`, `integrations`, each numeric or null. `dimension_assessments` contains a traceable claim explaining each dimension. Unknown dimensions have null scores and an explicit gap.
 - `critical_blockers`, `viable_agent_opportunities`, `conditional_agent_opportunities`, `not_ready_agent_opportunities`, `remediation_priorities`, `recommended_next_actions`: bounded claim lists.
 - `evidence_references`, `evidence_gaps`, `confidence`, `limitations`.
 
@@ -67,8 +67,56 @@ Live acceptance requires actual Responses API calls to `gpt-6-astra` for both sc
 
 Under-three-minute demonstration: show V1 deterministic C-008 findings; request Astra assessment and inspect cited implications plus unknown dimensions; compare C-001; demonstrate unavailable AI while deterministic evidence remains visible.
 
-## Current blocker
+## Runtime, schemas, and tests
 
-`OPENAI_API_KEY` was absent from the executing environment. No repository `.env` file or API-key provisioning tool was available. Model-specific account access has therefore not been tested. Supply the key through a secure environment available to the runtime; never paste it into chat or commit it. Implementation stops at this explicit user-defined API-access gate.
+No third-party runtime dependency is required. `readiness/contracts.py` defines both JSON Schemas and validates the exact subset of schema keywords used. Export them for inspection with:
+
+```bash
+python3 -m readiness schema input
+python3 -m readiness schema output
+```
+
+The production prompt lives in `readiness/astra.py`. The adapter uses the OpenAI Responses API with `model=gpt-6-astra`, strict `text.format` JSON Schema, `store=false`, a 60-second timeout, a bounded response size, and no tools. `ASTRA_REASONING_EFFORT` defaults to `medium`; `low`, `medium`, and `high` are accepted. Redirects are rejected. Error messages never include provider bodies, request headers, key values, or exception text; only fixed/allowlisted codes leave the boundary.
+
+Provide `OPENAI_API_KEY` through the server process environment or a secure secret manager. Never put it in source, browser code, documentation, command-line arguments, or a tracked file. For an interactive zsh session, a silent prompt can populate the environment without placing the value in shell history:
+
+```zsh
+read -rs 'OPENAI_API_KEY?OpenAI API key: '
+export OPENAI_API_KEY
+```
+
+Then verify access and start the local product:
+
+```bash
+python3 -m readiness check-access
+python3 -m readiness serve
+```
+
+Open `http://127.0.0.1:8766`. Choose C-008 or C-001 and select **Assess with GPT-6 Astra**. `/v1` serves the unchanged V1 report; the new page links to it. The local server accepts only the fixed synthetic aliases, checks Host/Origin, and allows one model call at a time. It is a local demo server, not a public hosting architecture.
+
+For a CLI assessment:
+
+```bash
+python3 -m readiness assess C-008
+python3 -m readiness assess C-001
+```
+
+Optional `--output <file>` explicitly saves the sanitized envelope. Without that option, no model result is persisted by the application. After a session, `unset OPENAI_API_KEY` removes the shell variable. Secure or remove any plaintext file used to provision the key; the application does not read a key file itself.
+
+All tests use synthetic mocks and need no key or external API access:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+node tests/test_webmcp_contract.mjs
+node tests/test_readiness_ui.mjs
+```
+
+Server tests require permission to bind a loopback socket. Existing V1 tests are unmodified. New tests cover evidence construction, schema/reference rejection, unknown dimensions, mocks for both scenarios, missing key, timeout, malformed/partial/refused output, API/auth/model errors, quota failure, secret-safe errors/logs, same-origin HTTP behavior, text-only presentation, and failure retention of deterministic findings.
+
+## Live validation status and next gate
+
+Model discovery succeeded for exactly `gpt-6-astra`. Three assessment attempts (initial request, bounded-code retry, sanitized diagnostic) were rejected by the provider before any model output, with the final diagnostic confirming HTTP 429 / `credit_balance_exhausted`. No prompt refinement has been spent. No live result is represented by the test mocks.
+
+Add API credits to the relevant OpenAI project/organization, then repeat the access check and both assessments through the production adapter. Validate schema and references, manually inspect factual/inference boundaries, and measure the full demo. A successful model-discovery request does not establish sufficient credits for inference. Live output quality and the under-three-minute live flow remain unverified until the billing blocker is resolved.
 
 Official model reference: https://developers.openai.com/api/docs/models/gpt-6-astra

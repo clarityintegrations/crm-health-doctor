@@ -2,12 +2,14 @@ import copy
 import json
 import os
 import unittest
+import io
+from contextlib import redirect_stdout, redirect_stderr
 from unittest.mock import patch
 
 from readiness.contracts import INPUT_SCHEMA, OUTPUT_SCHEMA, DIMENSIONS, SECTIONS, validate, ValidationError
 from readiness.evidence import build_payload, reference_map
 from readiness.validation import validate_assessment
-from readiness.astra import AstraAdapter, Unavailable, request_json, MODEL
+from readiness.astra import AstraAdapter, Unavailable, request_json, NoRedirect, MODEL
 from readiness.service import assess
 from urllib.error import HTTPError
 
@@ -98,10 +100,12 @@ class AdapterTests(unittest.TestCase):
         for error in [TimeoutError('test-secret-sentinel'), RuntimeError('test-secret-sentinel'),
                       Unavailable('access_denied'), Unavailable('api_error')]:
             def transport(req, timeout): raise error
-            with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel'}):
+            logs = io.StringIO()
+            with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel'}), redirect_stdout(logs), redirect_stderr(logs):
                 r = assess('C-008', AstraAdapter(transport))
             self.assertEqual(r['status'], 'unavailable')
             self.assertNotIn('test-secret-sentinel', json.dumps(r))
+            self.assertEqual(logs.getvalue(), '')
             self.assertEqual(len(r['evidence']['findings']), 3)
 
     def test_provider_http_errors_are_sanitized(self):
@@ -156,6 +160,27 @@ class AdapterTests(unittest.TestCase):
             self.assertEqual(assess('C-008')['error_code'], 'invalid_configuration')
         with patch.dict(os.environ, {'OPENAI_API_KEY': 'test-secret-sentinel'}):
             self.assertTrue(AstraAdapter(lambda req, timeout: {'id': MODEL}).check_access())
+
+    def test_credit_error_and_redirect_never_expose_secret(self):
+        error = HTTPError('hidden', 429, 'test-secret-sentinel', {},
+                          io.BytesIO(b'{"error":{"code":"credit_balance_exhausted","message":"test-secret-sentinel"}}'))
+        with patch('readiness.astra.build_opener') as opener:
+            opener.return_value.open.side_effect = error
+            with self.assertRaises(Unavailable) as caught: request_json(None)
+            self.assertEqual(caught.exception.code, 'credit_balance_exhausted')
+            self.assertNotIn('test-secret-sentinel', str(caught.exception))
+        with self.assertRaises(Unavailable):
+            NoRedirect().redirect_request(None, None, 302, '', {}, 'https://untrusted.example')
+
+    def test_unknown_fields_numeric_bounds_and_partial_result(self):
+        p = build_payload('C-001')
+        for score in (-5, 101, True, 91):
+            r = mock_assessment(p); r['dimension_scores']['data'] = score
+            with self.assertRaises(ValidationError): validate_assessment(r, p)
+        r = mock_assessment(p); r['unexpected'] = 'new claim'
+        with self.assertRaises(ValidationError): validate_assessment(r, p)
+        r = mock_assessment(p); r['dimension_assessments']['knowledge']['basis'] = 'assumption'
+        with self.assertRaises(ValidationError): validate_assessment(r, p)
 
 
 if __name__ == '__main__': unittest.main()
