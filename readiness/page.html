@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRM Health Doctor — Agent Readiness Edition</title>
+<style>
+body{font:16px system-ui,sans-serif;background:#f4f7fb;color:#172b43;max-width:1040px;margin:32px auto;padding:0 20px}h1{font-size:28px}button,select{font:inherit;padding:10px;margin:4px}section{background:white;border:1px solid #dce4ef;border-radius:10px;padding:18px;margin:16px 0}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:10px;border-bottom:1px solid #ddd}small{display:block;color:#4b5e73;margin:5px 0}li{margin:12px 0}#status{font-weight:600}button:disabled{opacity:.6}
+</style>
+<h1>CRM Health Doctor — Agent Readiness Edition</h1>
+<p>Synthetic demonstration. Deterministic findings provide the facts; GPT-6 Astra assesses their implications. Human review is required.</p>
+<p><a href="/v1" target="_blank" rel="noopener">Open the unchanged WebMCP V1 report</a></p>
+<label for="alias">Compare record</label><select id="alias"><option>C-008</option><option>C-001</option></select>
+<button id="assess" type="button">Assess with GPT-6 Astra</button>
+<p id="status" role="status" aria-live="polite">Loading deterministic evidence…</p>
+<section><h2>Deterministic evidence</h2><div id="evidence"></div></section>
+<div id="assessment"></div>
+<script src="/ui.js"></script></html>
