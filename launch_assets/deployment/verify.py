@@ -1,5 +1,6 @@
 """Bounded deployment-route checks. Never make a live model request."""
 import hashlib
+from html.parser import HTMLParser
 from http.client import HTTPConnection
 import json
 import os
@@ -9,6 +10,27 @@ import unittest
 from unittest.mock import patch
 
 from .server import create_server, PUBLIC_FILES, PLAYBACK
+
+
+class Controls(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.disabled_fieldset = False
+        self.buttons = []
+        self.selects = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'fieldset':
+            self.disabled_fieldset = 'disabled' in attrs
+        if tag == 'button':
+            self.buttons.append((attrs, self.disabled_fieldset))
+        if tag == 'select':
+            self.selects.append((attrs, self.disabled_fieldset))
+
+    def handle_endtag(self, tag):
+        if tag == 'fieldset':
+            self.disabled_fieldset = False
 
 
 class DeploymentChecks(unittest.TestCase):
@@ -64,6 +86,33 @@ class DeploymentChecks(unittest.TestCase):
             html = self.request(PLAYBACK + alias + '.html')[1].decode()
             self.assertIn('Previously generated real GPT-6 Astra assessment', html)
             self.assertIn('Real inference over synthetic CRM evidence — playback, not live inference.', html)
+
+    def test_assess_capability_presentation_only(self):
+        # Non-credential sentinel exercises HTML rendering only. Never POST here.
+        for key in ('', '   ', 'non-credential-render-test'):
+            with self.subTest(configured=bool(key.strip())):
+                with patch.dict(os.environ, {'OPENAI_API_KEY': key}):
+                    status, body = self.request('/')
+                self.assertEqual(status, 200)
+                html = body.decode()
+                controls = Controls()
+                controls.feed(html)
+                button, inherited_disabled = next(b for b in controls.buttons if b[0].get('id') == 'assess')
+                selector, selector_disabled = next(s for s in controls.selects if s[0].get('id') == 'alias')
+                self.assertNotIn('disabled', selector)
+                self.assertFalse(selector_disabled)
+                self.assertEqual(inherited_disabled, not bool(key.strip()))
+                self.assertEqual('disabled' in button, not bool(key.strip()))
+                self.assertIn('<script src="/ui.js"></script>', html)
+                self.assertIn(PLAYBACK + 'c008.html', html)
+                self.assertIn(PLAYBACK + 'c001.html', html)
+                self.assertNotIn('non-credential-render-test', html)
+                if not key.strip():
+                    self.assertEqual(button['aria-describedby'], 'live-assessment-notice')
+                    self.assertEqual(html.count('Live Astra assessment is not enabled on this public demo.'), 1)
+                else:
+                    self.assertNotIn('<fieldset', html)
+                    self.assertIn('Live assessment is configured; it makes a new API request.', html)
 
     def test_no_directory_or_private_file_serving(self):
         for path in ['/.env', '/.git/config', '/readiness/astra.py', '/fixtures/health_matrix.json',

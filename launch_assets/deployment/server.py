@@ -43,7 +43,8 @@ class PublicHandler(Handler):
         if path == '/':
             live = bool(os.environ.get('OPENAI_API_KEY', '').strip())
             notice = ('Live assessment is configured; it makes a new API request.' if live else
-                      'Live assessment is not configured on this deployment. Use the preserved real assessments below; deterministic evidence remains available.')
+                      'Live Astra assessment is not enabled on this public demo. Use the preserved real Astra assessments above.')
+            notice_tag = '<p>' if live else '<p id="live-assessment-notice">'
             links = (f'<nav aria-label="Challenge demonstration"><p>'
                      f'<a href="{PLAYBACK}c008.html">C-008 preserved Astra assessment</a> · '
                      f'<a href="{PLAYBACK}c001.html">C-001 preserved Astra assessment</a> · '
@@ -51,9 +52,18 @@ class PublicHandler(Handler):
                      '<p>The deployed Python runtime includes the real GPT-6 Astra integration. '
                      'The Assess button calls its server-side /assess route. '
                      'Preserved assessments are playback, not live inference.</p>'
-                     f'<p>{notice}</p>')
+                     f'{notice_tag}{notice}</p>')
             page = (ASSETS / 'page.html').read_text(encoding='utf-8')
             page = page.replace('<label for="alias">', links + '<label for="alias">', 1)
+            if not live:
+                # Native fieldset disabling survives the frozen UI's evidence-load
+                # callback clearing button.disabled. Record selection stays outside.
+                button = '<button id="assess" type="button">Assess with GPT-6 Astra</button>'
+                page = page.replace(button,
+                    '<fieldset disabled style="display:inline-block;border:0;padding:0;margin:0">'
+                    '<button id="assess" type="button" disabled '
+                    'aria-describedby="live-assessment-notice" style="cursor:not-allowed">'
+                    'Assess with GPT-6 Astra</button></fieldset>', 1)
             return self.send(200, page.encode(), 'text/html')
         if path in (PLAYBACK, '/demo'):
             path = PLAYBACK + 'index.html'
